@@ -1,31 +1,44 @@
 # WALL-E — Current State
 
-_Last updated: 2026-11-02_
+_Last updated: 2026-11-04_
+
+## Product (confirmed)
+WALL-E is an internal, evidence-grounded, multi-discipline engineering and project execution assistant. Initial scope: document intelligence across Mechanical, Piping, Fabrication, Installation, and E&I. Read-only and advisory; no engineering approvals.
 
 ## Current phase
-Phase 0 — Product Definition & Architecture (specification only; no code).
+**Phase 1 — Multi-discipline Document Intelligence.** M0 (specification + ADR) **approved 2026-11-04**. Next milestone: M1. No implementation code exists yet.
 
-## Scope (approved)
-WALL-E is the product: a read-only, advisory, evidence-grounded industrial AI agent for reliability and maintenance engineers. Supporting infrastructure exists only to serve it. Binding decisions D-01–D-13 are recorded in `docs/spec/01-agent-charter.md` §2.
+## Governing documents
+- `docs/spec/phase-1-document-intelligence.md`: governs Phase 1 (approved).
+- `docs/adr/ADR-001-phase1-deterministic-baseline.md`: accepted. Deterministic CLI pipeline; no LLM, network, agent framework, vector search or database.
+- `docs/spec/01–03` v0.1: carry a Phase 1 precedence banner. Maintenance-specific items are inactive; cross-cutting requirements remain in force (Phase 1 spec §17). A v0.2 rewrite is planned after Phase 1.
 
 ## Completed
-- `CLAUDE.md` routing policy and `CURRENT_STATE.md` (committed `c082477`).
-- Drafted `docs/spec/01-agent-charter.md`, `02-requirements.md`, `03-capabilities-boundaries.md`.
-- Independent review of 01–03 (Opus subagent); high/medium findings applied.
+- `CLAUDE.md` routing policy (`c082477`).
+- Specs 01–03 v0.1 draft checkpoint (`cd38a21`).
+- Product redirection analysis (project execution focus).
+- M0: Phase 1 spec, ADR-001, banners on 01–03 (written to the repository; **not yet committed**).
 
-## In progress
-- 01–03 **awaiting user review**. Not committed (per user instruction).
+## Approved M0 decisions
+- S-1 standalone Phase 1 spec; S-2 five claim classes ("Fact as stated in source" display); S-3 BOQ source transcription only; S-4 fully deterministic.
+- `delivery_model` and `contracted_scope` manifest fields; execution responsibility never inferred.
+- Conventions come only from the project manifest; Appendix B default vocabularies (generic, labelled assumptions).
+- Explicit observation rules OBS-01..07; forbidden-phrase check.
+- Cross-unit tolerance 1%; ambiguous units not comparable; text-quality thresholds (2% / 5 words).
+- Independent resolver engines (PDFium; stdlib XLSX); stated limitations.
+- Per-file subprocess = fault containment, not a sandbox; a deployment sandbox is required for non-synthetic documents.
+- Blind holdout protocol and size; metrics always n/N; provisional holdout thresholds.
+- Completion criteria incl. 30-citation human spot-check.
+- pytest installation (dev only) approved for M1.
+- Process rule: **no real or confidential documents in the cloud development session.**
 
-## Open decisions (awaiting user)
-- Approve assumptions A-01–A-19 (01 §9, 02 §8, 03 §8) and provisional thresholds.
-- Confirm: P-102 as an equipment-set record (A-02); inference-bearing field caps (A-18); outbound data gate scope (A-19).
-- Questions Q-01 (time-series data?), Q-02 (expert reviewer), Q-03 (cost ceiling timing).
-- Approval to proceed to documents 04–12.
+## Open questions
+- Q-P1-01..04 (Phase 1 spec §18); CQ-01..13 from the change proposal (company confirmation).
 
 ## Known risks / limitations
-- Provisional thresholds are unbaselined.
-- ISO 14224 terms used from general knowledge; to be checked against the standard text.
+- Synthetic validation only; not evidence of real-world reliability.
+- Holdout author is the same model family (correlated blind spots).
 - Approval gates are not technically enforced (deferred by user).
 
 ## Next step
-Await user review of 01–03. Do not start 04–12 without explicit approval.
+Await approval to start **M1** (pyproject, models, manifest loader, discovery/hashing, coverage, run manifest; installs pytest).

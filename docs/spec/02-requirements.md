@@ -7,6 +7,9 @@
 | Depends on | 01-agent-charter (decisions D-xx, use cases UC-xx, goals G-x, assumptions A-xx) |
 | Feeds | 03, 04–12 |
 
+
+> **Status note (Phase 1).** This document is v0.1 and was written for a maintenance-investigation direction. For Phase 1, `docs/spec/phase-1-document-intelligence.md` governs wherever the two conflict. Maintenance-specific items (D-02, D-03, UC-01–UC-06, FR-AST-\*, FR-PRC-\*, FR-MNT-\*, FR-INV-\*, EVD-001/002, A-02) are inactive pending the v0.2 rewrite. Cross-cutting requirements remain in force as listed in the Phase 1 specification §17.
+
 ---
 
 ## 1. How to read this document
