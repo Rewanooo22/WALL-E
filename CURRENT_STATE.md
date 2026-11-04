@@ -1,24 +1,44 @@
 # WALL-E — Current State
 
-_Last updated: 2026-11-02_
+_Last updated: 2026-11-04_
+
+## Product (confirmed)
+WALL-E is an internal, evidence-grounded, multi-discipline engineering and project execution assistant. Initial scope: document intelligence across Mechanical, Piping, Fabrication, Installation, and E&I. Read-only and advisory; no engineering approvals.
 
 ## Current phase
-Phase 0 — Governance setup. No application code yet.
+**Phase 1 — Multi-discipline Document Intelligence.** M0 (specification + ADR) **approved 2026-11-04**. Next milestone: M1. No implementation code exists yet.
+
+## Governing documents
+- `docs/spec/phase-1-document-intelligence.md`: governs Phase 1 (approved).
+- `docs/adr/ADR-001-phase1-deterministic-baseline.md`: accepted. Deterministic CLI pipeline; no LLM, network, agent framework, vector search or database.
+- `docs/spec/01–03` v0.1: carry a Phase 1 precedence banner. Maintenance-specific items are inactive; cross-cutting requirements remain in force (Phase 1 spec §17). A v0.2 rewrite is planned after Phase 1.
 
 ## Completed
-- Added `CLAUDE.md` containing the WALL-E Model and Agent Routing Policy (verbatim) and a model-availability reference.
-- Added this `CURRENT_STATE.md`.
+- `CLAUDE.md` routing policy (`c082477`).
+- Specs 01–03 v0.1 draft checkpoint (`cd38a21`).
+- Product redirection analysis (project execution focus).
+- M0: Phase 1 spec, ADR-001, banners on 01–03 (written to the repository; **not yet committed**).
 
-## In progress
-- None.
+## Approved M0 decisions
+- S-1 standalone Phase 1 spec; S-2 five claim classes ("Fact as stated in source" display); S-3 BOQ source transcription only; S-4 fully deterministic.
+- `delivery_model` and `contracted_scope` manifest fields; execution responsibility never inferred.
+- Conventions come only from the project manifest; Appendix B default vocabularies (generic, labelled assumptions).
+- Explicit observation rules OBS-01..07; forbidden-phrase check.
+- Cross-unit tolerance 1%; ambiguous units not comparable; text-quality thresholds (2% / 5 words).
+- Independent resolver engines (PDFium; stdlib XLSX); stated limitations.
+- Per-file subprocess = fault containment, not a sandbox; a deployment sandbox is required for non-synthetic documents.
+- Blind holdout protocol and size; metrics always n/N; provisional holdout thresholds.
+- Completion criteria incl. 30-citation human spot-check.
+- pytest installation (dev only) approved for M1.
+- Process rule: **no real or confidential documents in the cloud development session.**
 
-## Open decisions (awaiting user)
-- Define WALL-E's purpose, tech stack, and first implementation phase.
-- Whether to enforce approval gates via Claude Code hooks/permissions (currently guidance only).
+## Open questions
+- Q-P1-01..04 (Phase 1 spec §18); CQ-01..13 from the change proposal (company confirmation).
 
 ## Known risks / limitations
-- Model availability table in `CLAUDE.md` is a snapshot; account access to each model is unverified.
-- Approval gates are not technically enforced.
+- Synthetic validation only; not evidence of real-world reliability.
+- Holdout author is the same model family (correlated blind spots).
+- Approval gates are not technically enforced (deferred by user).
 
 ## Next step
-Await user approval and definition of the first task/phase.
+Await approval to start **M1** (pyproject, models, manifest loader, discovery/hashing, coverage, run manifest; installs pytest).
