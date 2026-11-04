@@ -6,7 +6,7 @@ _Last updated: 2026-11-04_
 WALL-E is an internal, evidence-grounded, multi-discipline engineering and project execution assistant. Initial scope: document intelligence across Mechanical, Piping, Fabrication, Installation, and E&I. Read-only and advisory; no engineering approvals.
 
 ## Current phase
-**Phase 1 — Multi-discipline Document Intelligence.** M0 (specification + ADR) **approved 2026-11-04**. Next milestone: M1. No implementation code exists yet.
+**Phase 1 — Multi-discipline Document Intelligence.** M0 approved and committed (`fd3816c`). **M1 implemented, awaiting review (not committed).**
 
 ## Governing documents
 - `docs/spec/phase-1-document-intelligence.md`: governs Phase 1 (approved).
@@ -17,7 +17,8 @@ WALL-E is an internal, evidence-grounded, multi-discipline engineering and proje
 - `CLAUDE.md` routing policy (`c082477`).
 - Specs 01–03 v0.1 draft checkpoint (`cd38a21`).
 - Product redirection analysis (project execution focus).
-- M0: Phase 1 spec, ADR-001, banners on 01–03 (written to the repository; **not yet committed**).
+- M0: Phase 1 spec, ADR-001, banners on 01–03 (`fd3816c`).
+- M1 (uncommitted): `pyproject.toml`, `.gitignore`, `src/wall_e/{models,project,run}.py`; tests for manifest, discovery, models, run manifest, static network policy. 45 tests pass; 4 of 4 deliberate code mutations caught by the tests.
 
 ## Approved M0 decisions
 - S-1 standalone Phase 1 spec; S-2 five claim classes ("Fact as stated in source" display); S-3 BOQ source transcription only; S-4 fully deterministic.
@@ -41,4 +42,4 @@ WALL-E is an internal, evidence-grounded, multi-discipline engineering and proje
 - Approval gates are not technically enforced (deferred by user).
 
 ## Next step
-Await approval to start **M1** (pyproject, models, manifest loader, discovery/hashing, coverage, run manifest; installs pytest).
+Await review of M1. Next: **M2**: fixture spec, then the blind holdout **before** any parser code or dev ground truth, then the dev fixture generator.
