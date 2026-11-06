@@ -12,6 +12,7 @@ import hashlib
 import importlib.metadata
 import json
 import platform
+import re
 import sys
 import uuid
 from dataclasses import asdict
@@ -25,6 +26,12 @@ from wall_e.project import Limits, ProjectScan
 TRACKED_DISTRIBUTIONS = ("pdfplumber", "pdfminer.six", "pypdfium2", "openpyxl", "pydantic")
 RUN_MANIFEST_NAME = "run_manifest.json"
 VOLATILE_KEYS = frozenset({"run_id", "started_at"})
+RUN_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,64}")  # used with fullmatch
+# L-3: Windows device names. Path components are limited to [A-Za-z0-9_-], so only the
+# bare names (case-insensitive) can occur. Module-level so tests can enable it on any OS.
+WINDOWS_RESERVED_NAMES = frozenset(
+    {"CON", "PRN", "AUX", "NUL"} | {f"{p}{i}" for p in ("COM", "LPT") for i in range(10)})
+WINDOWS_RESERVED_NAMES_APPLY = sys.platform == "win32"
 
 
 class OutputDirError(Exception):
@@ -46,21 +53,56 @@ def config_hash(limits: Limits) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def create_run_dir(out_root: Path, scan: ProjectScan, run_id: str | None = None) -> tuple[str, Path]:
-    """Create out_root/<project_id>/<run_id>/. Refuses to write inside the project
-    root (outputs would be rediscovered as inputs) or into an existing run dir."""
-    out_root = Path(out_root).resolve()
+def _is_within(path: Path, root: Path) -> bool:
     try:
-        out_root.relative_to(scan.root)
-        raise OutputDirError("output directory must not be inside the project directory")
+        path.relative_to(root)
+        return True
     except ValueError:
-        pass
-    run_id = run_id or uuid.uuid4().hex
-    run_dir = out_root / scan.manifest.project_id / run_id
+        return False
+
+
+def create_run_dir(out_root: Path, scan: ProjectScan, run_id: str | None = None) -> tuple[str, Path]:
+    """Create out_root/<project_id>/<run_id>/.
+
+    The final run directory is resolved and refused if it is inside the scanned
+    project (outputs would be rediscovered as inputs), is an ancestor of the
+    project, or escapes out_root. Existing run directories are never reused."""
+    run_id = uuid.uuid4().hex if run_id is None else run_id
+    if not isinstance(run_id, str) or not RUN_ID_PATTERN.fullmatch(run_id):
+        raise OutputDirError("run_id must match ^[A-Za-z0-9_-]{1,64}$")
+    if WINDOWS_RESERVED_NAMES_APPLY:
+        for label, name in (("project_id", scan.manifest.project_id), ("run_id", run_id)):
+            if name.upper() in WINDOWS_RESERVED_NAMES:
+                raise OutputDirError(f"{label} {name!r} is a reserved device name on Windows")
+    out_root = Path(out_root).resolve()
+    literal = out_root / scan.manifest.project_id / run_id
+    run_dir = literal.resolve()
+    if run_dir == out_root or not _is_within(run_dir, out_root):
+        raise OutputDirError("run directory escapes the output directory")
+    if _is_within(run_dir, scan.root):
+        raise OutputDirError("output directory must not be inside the project directory")
+    if _is_within(scan.root, run_dir):
+        raise OutputDirError("run directory must not be an ancestor of the project directory")
+    # Exact string comparison: Path equality is case-insensitive on Windows (N-4).
+    if str(run_dir) != str(literal):
+        # L-2: a link/junction under out_root (e.g. out/<project_id> -> out/<other>) would
+        # redirect this run into another project's outputs. N-4: on a case-insensitive
+        # filesystem an existing out/test-1 would also take the outputs of project TEST-1.
+        raise OutputDirError("run directory path resolves elsewhere (link or reparse point, "
+                             "or an existing directory whose name differs only by case)")
     try:
         run_dir.mkdir(parents=True, exist_ok=False)
     except FileExistsError as exc:
         raise OutputDirError(f"run directory already exists: {run_dir}") from exc
+    except OSError as exc:
+        raise OutputDirError(f"run directory could not be created ({type(exc).__name__})") from exc
+    # L-3: confirm a real directory was created at exactly this path.
+    try:
+        ok = run_dir.is_dir() and str(run_dir.resolve(strict=True)) == str(literal)
+    except (OSError, RuntimeError):
+        ok = False
+    if not ok:
+        raise OutputDirError("run directory was not created as a regular directory at the expected path")
     return run_id, run_dir
 
 

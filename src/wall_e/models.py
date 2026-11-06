@@ -14,7 +14,7 @@ import hashlib
 import json
 import re
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -78,6 +78,16 @@ class ClassificationSource(str, Enum):
     MANIFEST_FILE_ENTRY = "manifest_file_entry"
     MANIFEST_DEFAULT = "manifest_default"
     BUILT_IN_DEFAULT = "built_in_default"  # confidential (FR-SEC-001)
+    # The manifest entry's label was invalid; confidential applied (FR-SEC-001, fail-safe).
+    FAIL_SAFE_INVALID_LABEL = "fail_safe_invalid_label"
+
+
+# Least to most restrictive. Conflicting declarations resolve to the most restrictive.
+CLASSIFICATION_RESTRICTIVENESS: dict[Classification, int] = {
+    Classification.SYNTHETIC: 0,
+    Classification.PUBLIC_LICENSED: 1,
+    Classification.CONFIDENTIAL: 2,
+}
 
 
 class EpistemicClass(str, Enum):
@@ -138,7 +148,10 @@ class ManifestIssue(_Strict):
 
 
 class ContractedScope(_Strict):
-    declared_by: str = "user"
+    """A declared contracted execution scope. None on the manifest means NOT_DECLARED;
+    an instance with zero disciplines means DECLARED with no disciplines (spec §6)."""
+
+    declared_by: Literal["user"] = "user"
     disciplines: tuple[Discipline, ...] = ()
     basis: tuple[dict[str, Any], ...] = ()
     notes: str | None = None
@@ -165,6 +178,7 @@ class Conventions(_Strict):
 class ManifestFileEntry(_Strict):
     path: str
     classification: Classification
+    classification_source: ClassificationSource = ClassificationSource.MANIFEST_FILE_ENTRY
 
 
 class ProjectManifest(_Strict):
@@ -188,7 +202,8 @@ class ProjectManifest(_Strict):
     @field_validator("project_id")
     @classmethod
     def _project_id(cls, v: str) -> str:
-        if not PROJECT_ID_PATTERN.match(v):
+        # fullmatch: re.match with "$" would accept a trailing newline.
+        if not PROJECT_ID_PATTERN.fullmatch(v):
             raise ValueError("project_id must match ^[A-Za-z0-9_-]{1,64}$")
         return v
 
@@ -244,7 +259,7 @@ class Locator(_Strict):
 
 def make_evidence_id(project_id: str, file_sha256: str, locator: Locator) -> str:
     """Deterministic, project-namespaced evidence ID (spec §11.1)."""
-    if not PROJECT_ID_PATTERN.match(project_id):
+    if not PROJECT_ID_PATTERN.fullmatch(project_id):
         raise ValueError("invalid project_id")
     digest = hashlib.sha256(f"{project_id}|{file_sha256}|{locator.canonical()}".encode()).hexdigest()
     return f"{project_id}:{digest[:16]}"
