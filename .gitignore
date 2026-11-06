@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+build/
+dist/
+
+# WALL-E run outputs and generated fixtures (never commit real documents)
+out/
+tests/fixtures/generated/

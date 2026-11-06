@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wall-e"
+version = "0.1.0"
+description = "WALL-E Phase 1: deterministic, evidence-grounded multi-discipline document intelligence (internal CLI prototype)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pdfplumber==0.11.10",   # brings pdfminer.six and pypdfium2 (ADR-001 §4.1, §4.3)
+    "openpyxl==3.1.5",       # ADR-001 §4.2
+    "pydantic==2.13.5",      # ADR-001 §4.4
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.2.0",
+    "reportlab==5.0.1",      # synthetic fixture generation only
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra"
