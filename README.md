@@ -2,7 +2,7 @@
 
 *Workflow Automation & Logic for Learning Engineering*
 
-WALL-E is an early-stage Python library for **deterministic, evidence-grounded document intelligence** on engineering project documents. The target disciplines are Mechanical, Piping, Fabrication, Installation, and Electrical & Instrumentation (E&I). Phase 1 is specified as a read-only, advisory CLI prototype. Given a project folder with a `project.json` manifest and its PDF and XLSX documents, it is meant to produce a report in which every statement cites its source evidence. Phase 1 uses no LLM, no network access and no engineering approvals.
+WALL-E is an internal, evidence-grounded, multi-discipline engineering and project execution assistant, in early development. Its initial scope is **deterministic document intelligence** on engineering project documents, for the Mechanical, Piping, Fabrication, Installation, and Electrical & Instrumentation (E&I) disciplines. Phase 1 is specified as a CLI-based internal prototype that is read-only and advisory. Given a project folder with a `project.json` manifest and its PDF and XLSX documents, it is meant to produce a report in which every factual claim cites its source evidence. Phase 1 uses no LLM or network access and makes no engineering approvals.
 
 > **Status: early development (Phase 1, milestone M1 of M1–M7).**
 > Most of the project currently exists as specification. The implemented code covers project loading (manifest validation, safe file discovery, hashing, classification), the core data models and the run manifest. **There is no CLI yet, and no PDF or XLSX parsing, analysis or report generation.**
@@ -87,7 +87,9 @@ The manifest format is defined in the [Phase 1 specification §4.2](docs/spec/ph
 git clone https://github.com/Rewanooo22/wall-e.git
 cd wall-e
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate          # Windows: Git Bash: source .venv/Scripts/activate
+                                   #          PowerShell: .venv\Scripts\Activate.ps1
+                                   #          cmd: .venv\Scripts\activate.bat
 pip install -e ".[dev]"
 ```
 
@@ -107,12 +109,14 @@ pytest
 | `tests/test_discovery.py` | File discovery, path containment, hashing, classification matching, duplicates |
 | `tests/test_models.py` | Data-model validation |
 | `tests/test_run_manifest.py` | Run directory safety and run manifest contents |
-| `tests/test_static_policy.py` | No network, shell-subprocess or LLM SDK imports in `src/wall_e` |
+| `tests/test_static_policy.py` | No network or LLM SDK module imports in `src/wall_e` (static import check; `subprocess` is not checked) |
 
 ## Project structure
 
 ```
 wall-e/
+├── .gitignore
+├── CLAUDE.md                        # Working instructions for Claude Code sessions
 ├── pyproject.toml
 ├── CURRENT_STATE.md                 # Detailed development log and open review findings
 ├── docs/
@@ -146,22 +150,31 @@ wall-e/
 
 ## Planned Phase 1 pipeline (specified, not implemented)
 
-The pipeline below is quoted from Phase 1 spec §12. Only step 1 exists today.
+The pipeline below is summarised from Phase 1 spec §12. Only step 1 exists today.
 
 1. **Load**: validate the manifest, discover files, contain paths, hash, classify, detect duplicates. **(implemented in M1)**
 2. **Extract**: per-file isolated worker processes for PDF (page text, word boxes, tables) and XLSX (cells and flags).
 3. **Identify**: document number, revision, title, date, status and discipline.
 4. **Analyse**: register reconciliation, revision issues, missing information, attribute conflicts, BOQ transcription, observations.
 5. **Claims**: template rendering into claim objects.
-6. **Verify**: rule checks plus an independent citation resolver.
+6. **Verify**: rule checks (V-01..V-08) plus an independent citation resolver.
 7. **Report**: `report.json`, `report.md` and `run_manifest.json` under `out/<project_id>/<run_id>/`.
 
 ## Limitations
 
 - **Pre-alpha.** Only the loading stage, data models and run manifest exist. Nothing can analyse documents yet.
 - **Synthetic data only.** Development uses synthetic data, and the project's process rule forbids real or confidential documents in development sessions.
-- **Isolation is not a sandbox.** The planned per-file subprocess isolation is fault containment only. The specification requires a deployment sandbox before any non-synthetic documents are processed.
+- **Isolation is not a sandbox.** The planned per-file subprocess isolation is fault containment only, not security isolation. A crafted PDF or XLSX file could exploit a parser vulnerability and run code with the user's privileges, including network access. See the required operating mode below.
 - **Known open findings.** Open review findings and deferred risks (for example, check-then-use windows and hard links to files outside the project) are tracked in `CURRENT_STATE.md`.
+
+## Required operating mode for non-synthetic documents
+
+Phase 1 is **not** a hardened sandbox, and its code does not implement one (Phase 1 spec §14.2).
+
+- **Deployment-level isolation is required** before WALL-E processes any non-synthetic document. Examples are a no-network namespace, an unprivileged user, a read-only filesystem, seccomp, or a container started with `--network=none`.
+- **Trusted sources only.** Phase 1 is intended only for documents from trusted sources.
+- **Pinned dependencies, kept up to date.** Dependencies are pinned in `pyproject.toml`, and the pins must be kept up to date.
+- **No real or confidential documents in cloud development sessions** (Phase 1 spec §14.4). Development and testing use synthetic data only.
 
 ## Roadmap
 
